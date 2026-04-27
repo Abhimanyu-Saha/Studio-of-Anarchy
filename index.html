@@ -989,14 +989,14 @@ function HeroCarousel({ imgRef }) {
 
       {/* Prev / Next arrows */}
       {[
-        { dir: "prev", side: { left: 64 }, label: "Previous slide",
+        { dir: "prev", side: { left: 16 }, label: "Previous slide",
           onClick: () => { setPaused(true); setI(v => (v - 1 + HERO_SLIDES.length) % HERO_SLIDES.length); setTimeout(() => setPaused(false), 3000); } },
-        { dir: "next", side: { right: 0 }, label: "Next slide",
+        { dir: "next", side: { right: 16 }, label: "Next slide",
           onClick: () => { setPaused(true); setI(v => (v + 1) % HERO_SLIDES.length); setTimeout(() => setPaused(false), 3000); } },
       ].map(({ dir, side, label, onClick }) => (
         <button key={dir} data-cursor="link" aria-label={label} onClick={onClick}
           style={{
-            position: "absolute", bottom: 0, ...side,
+            position: "absolute", top: "50%", transform: "translateY(-50%)", ...side,
             width: 56, height: 56,
             background: "rgba(10,10,10,0.35)",
             backdropFilter: "blur(10px)",
@@ -1013,10 +1013,10 @@ function HeroCarousel({ imgRef }) {
           onMouseLeave={e => {
             e.currentTarget.style.borderColor = "rgba(240,237,232,0.18)";
             e.currentTarget.style.background = "rgba(10,10,10,0.35)";
-            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.transform = "translateY(-50%) scale(1)";
           }}
-          onMouseDown={e => { e.currentTarget.style.transform = "scale(0.94)"; }}
-          onMouseUp={e => { e.currentTarget.style.transform = "scale(1)"; }}
+          onMouseDown={e => { e.currentTarget.style.transform = "translateY(-50%) scale(0.94)"; }}
+          onMouseUp={e => { e.currentTarget.style.transform = "translateY(-50%) scale(1)"; }}
         >
           <svg width="20" height="12" viewBox="0 0 20 12" fill="none"
             style={{ transform: dir === "prev" ? "scaleX(-1)" : "none", display: "block" }}>
