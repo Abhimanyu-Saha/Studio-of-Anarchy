@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studio of Anarchy — Architectural Visualization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Outfit:wght@300;400;500;600&family=Space+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,700;1,900&family=Bebas+Neue&family=Major+Mono+Display&family=Abril+Fatface&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://unpkg.com/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+
+<style>
+/* Studio of Anarchy — globals */
+:root {
+  --color-bg:         #0A0A0A;
+  --color-surface:    #111111;
+  --color-surface-2:  #1A1A1A;
+  --color-border:     #2A2A2A;
+  --color-accent:     #C9A96E;
+  --color-accent-dim: #8A6E42;
+  --color-text-primary:   #F0EDE8;
+  --color-text-secondary: #9A9590;
+  --color-text-dim:   #5A5550;
+
+  --f-display: "Cormorant Garamond", "Times New Roman", serif;
+  --f-ui: "Outfit", system-ui, sans-serif;
+  --f-mono: "Space Mono", "Courier Prime", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--f-ui);
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body { cursor: none; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+button { background: none; border: none; color: inherit; font-family: inherit; cursor: none; }
+
+/* Custom cursor */
+.cursor-dot, .cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
+.cursor-dot {
+  width: 6px; height: 6px;
+  background: var(--color-accent);
+  border-radius: 50%;
+}
+.cursor-ring {
+  width: 32px; height: 32px;
+  border: 1px solid var(--color-text-secondary);
+  border-radius: 50%;
+  transition: width .35s cubic-bezier(.2,.8,.2,1),
+              height .35s cubic-bezier(.2,.8,.2,1),
+              background .3s,
+              border-color .3s;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: transparent;
+}
+.cursor-ring.view {
+  width: 84px; height: 84px;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-bg);
+}
+.cursor-ring.link {
+  width: 48px; height: 48px;
+  border-color: var(--color-accent);
+}
+@media (pointer: coarse) {
+  body { cursor: auto; }
+  .cursor-dot, .cursor-ring { display: none; }
+  button, a { cursor: pointer; }
+}
+
+.anarchy-caret {
+  animation: anarchyBlink 0.7s steps(1) infinite;
+}
+@keyframes anarchyBlink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+.container { max-width: 1440px; margin: 0 auto; padding: 0 48px; }
+@media (max-width: 900px) { .container { padding: 0 24px; } }
+@media (max-width: 480px) { .container { padding: 0 20px; } }
+
+/* Responsive grid helpers */
+.editorial-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 32px;
+}
+@media (max-width: 900px) {
+  .editorial-grid { grid-template-columns: 1fr; gap: 24px; }
+  .editorial-grid > * { grid-column: 1 / -1 !important; grid-row: auto !important; }
+}
+
+/* Mobile nav overlay */
+.mobile-menu-btn {
+  display: none;
+  width: 44px; height: 44px;
+  align-items: center; justify-content: center;
+  position: relative; z-index: 101;
+}
+.mobile-menu-btn span {
+  position: absolute; left: 10px; right: 10px; height: 1px;
+  background: var(--color-text-primary);
+  transition: transform .4s cubic-bezier(.2,.8,.2,1), top .4s cubic-bezier(.2,.8,.2,1);
+}
+.mobile-menu-btn span:nth-child(1) { top: 18px; }
+.mobile-menu-btn span:nth-child(2) { top: 26px; }
+.mobile-menu-btn.open span:nth-child(1) { top: 22px; transform: rotate(45deg); }
+.mobile-menu-btn.open span:nth-child(2) { top: 22px; transform: rotate(-45deg); }
+
+@media (max-width: 900px) {
+  .desktop-nav { display: none !important; }
+  .mobile-menu-btn { display: flex !important; }
+  .bottom-nav-wrap { display: none !important; }
+}
+
+.mobile-overlay {
+  position: fixed; inset: 0;
+  background: var(--color-bg);
+  z-index: 99;
+  display: flex; flex-direction: column;
+  padding: 100px 28px 40px;
+  clip-path: inset(0 0 100% 0);
+}
+.mobile-overlay a {
+  font-family: var(--f-display);
+  font-weight: 300;
+  font-size: clamp(40px, 11vw, 72px);
+  line-height: 1.05;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  display: block;
+}
+.mobile-overlay a em { font-style: italic; color: var(--color-accent); }
+
+.mono-label {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+.hairline {
+  height: 1px;
+  background: var(--color-border);
+  width: 100%;
+}
+
+/* Display type */
+.display {
+  font-family: var(--f-display);
+  font-weight: 300;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+.display em { font-style: italic; font-weight: 300; color: var(--color-accent); }
+.display em.anarchy-word { font-weight: 600; font-style: italic; color: var(--color-accent); }
+
+/* Reveal helpers */
+.line-mask {
+  overflow: hidden;
+  display: block;
+  padding-bottom: 0.18em;
+  margin-bottom: -0.18em;
+}
+.line-inner { display: block; will-change: transform; }
+
+.clip-reveal {
+  clip-path: inset(0 100% 0 0);
+  will-change: clip-path;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 16px;
+  padding: 18px 28px;
+  font-family: var(--f-ui);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  background: transparent;
+  transition: background .35s, color .35s, border-color .35s;
+  border-radius: 999px;
+}
+.btn .arrow {
+  width: 18px; height: 1px; background: currentColor; position: relative; transition: width .35s;
+}
+.btn .arrow::after {
+  content: ""; position: absolute; right: 0; top: 50%;
+  width: 6px; height: 1px; background: currentColor;
+  transform: rotate(40deg); transform-origin: right center;
+}
+.btn .arrow::before {
+  content: ""; position: absolute; right: 0; top: 50%;
+  width: 6px; height: 1px; background: currentColor;
+  transform: rotate(-40deg); transform-origin: right center;
+}
+.btn:hover { background: var(--color-accent); color: var(--color-bg); border-color: var(--color-accent); }
+.btn:hover .arrow { width: 28px; }
+.btn.primary { background: var(--color-accent); color: var(--color-bg); border-color: var(--color-accent); }
+.btn.primary:hover { background: var(--color-text-primary); border-color: var(--color-text-primary); }
+.btn.ghost { border-color: transparent; padding-left: 0; padding-right: 0; }
+.btn.ghost:hover { background: transparent; color: var(--color-accent); border-color: transparent; }
+
+/* App root hidden until mounted */
+#root { min-height: 100vh; }
+
+/* Mobile typography + layout overrides */
+@media (max-width: 900px) {
+  body { cursor: auto; }
+  .cursor-dot, .cursor-ring { display: none !important; }
+  button, a { cursor: pointer; }
+
+  .hero-image-wrap {
+    aspect-ratio: 3 / 4 !important;
+    margin-top: 24px !important;
+  }
+  .hero-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .hero-meta {
+    flex-direction: column !important;
+    gap: 6px;
+    align-items: flex-start !important;
+  }
+  .hero-ctas {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .hero-ctas .btn {
+    width: 100%;
+    justify-content: space-between;
+    min-height: 52px;
+  }
+
+  .stat-grid-mobile {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 24px !important;
+  }
+  .stat-grid-mobile > * {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    border-left: none !important;
+    padding-left: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .portfolio-grid-mobile {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .portfolio-grid-mobile > article {
+    grid-column: 1 / -1 !important;
+  }
+  .portfolio-grid-mobile > article > div:first-child {
+    aspect-ratio: 4 / 5 !important;
+  }
+
+  .svc-switcher {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .svc-switcher > button {
+    border-left: 1px solid var(--color-border) !important;
+    border-top: 1px solid var(--color-border) !important;
+  }
+  .svc-switcher > button:nth-child(odd) { border-left: none !important; }
+  .svc-switcher > button:nth-child(-n+2) { border-top: none !important; }
+
+  .svc-detail {
+    grid-template-columns: 1fr !important;
+  }
+  .svc-detail > * { grid-column: 1 / -1 !important; }
+
+  .bespoke-row {
+    grid-template-columns: 1fr !important;
+  }
+  .bespoke-row > * { grid-column: 1 / -1 !important; }
+
+  .process-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1px !important;
+  }
+
+  .contact-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .contact-grid > * { grid-column: 1 / -1 !important; }
+
+  .btn { min-height: 48px; padding: 14px 22px; }
+}
+
+@media (max-width: 480px) {
+  .hero-top-meta { display: none; }
+  .hero-bottom-hint { display: none !important; }
+}
+
+@media (max-width: 900px) {
+  .accordion-toggle { display: flex !important; }
+  .pricing-list {
+    max-height: 0; overflow: hidden;
+    transition: max-height .4s cubic-bezier(.2,.8,.2,1);
+  }
+  .pricing-list.open { max-height: 600px; }
+}
+
+/* Selection */
+::selection { background: var(--color-accent); color: var(--color-bg); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-surface-2); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-border); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+// Project data
+window.SOA_PROJECTS = [
+  { id: "p01", num: "01", slug: "ash-residence", title: "Ash Residence", category: "interior",
+    location: "Bengaluru, IN", year: "2024", scope: "Full Apartment / 4 Hero Renders",
+    tags: ["Residential", "Dark Palette", "Day + Dusk"],
+    summary: "A four-bedroom residence rebuilt around a single material story: charred oak, hand-troweled lime, and brushed brass. We rendered the daylight pass first to lock the volumes, then a dusk pass that warmed every surface without breaking the cool palette.",
+    image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1615529182904-14819c35db37?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1800&q=85",
+    ],
+    featured: true, size: "tall" },
+
+  { id: "p02", num: "02", slug: "vantage-penthouse", title: "Vantage Penthouse", category: "interior",
+    location: "Mumbai, IN", year: "2024", scope: "Living + Dining / 3 Renders",
+    tags: ["Penthouse", "Skyline", "Dusk"],
+    summary: "A 28th-floor penthouse with a sea-facing balcony. We modeled the city below at dusk so every interior render carries authentic skyline glow — no plate compositing, no fake bokeh.",
+    image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1616137466211-f939a420be84?auto=format&fit=crop&w=1800&q=85",
+    ],
+    featured: true, size: "wide" },
+
+  { id: "p03", num: "03", slug: "monolith-house", title: "Monolith House", category: "exterior",
+    location: "Goa, IN", year: "2023", scope: "Facade / Aerial / Approach",
+    tags: ["Villa", "Concrete", "Tropical"],
+    summary: "Board-form concrete cast against laterite stone, sited on a sloped tropical lot. Aerial render establishes the volume; ground approach sells the materiality.",
+    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1800&q=85",
+    ],
+    featured: false, size: "square" },
+
+  { id: "p04", num: "04", slug: "kabin-47", title: "Kabin 47", category: "exterior",
+    location: "Manali, IN", year: "2023", scope: "Cabin / 2 Seasonal Variants",
+    tags: ["Cabin", "Snow", "Forest"],
+    summary: "A 540 sq ft mountain cabin rendered in two seasons — late autumn and full winter — to test how the cedar siding aged into the snow line.",
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=85",
+    ],
+    featured: false, size: "tall" },
+
+  { id: "p05", num: "05", slug: "noir-kitchen", title: "Noir Kitchen Suite", category: "product",
+    location: "Studio Project", year: "2024", scope: "Kitchen System / Catalog",
+    tags: ["Product", "Kitchen", "Catalog"],
+    summary: "A modular kitchen system rendered for a catalog launch — eight configurations, consistent lighting, swap-ready material library.",
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1567016432779-094069958ea5?auto=format&fit=crop&w=1800&q=85",
+    ],
+    featured: false, size: "wide" },
+
+  { id: "p06", num: "06", slug: "lumen-chair", title: "Lumen Chair", category: "product",
+    location: "Studio Project", year: "2024", scope: "Furniture / 4 Angles + Turntable",
+    tags: ["Product", "Furniture", "Turntable"],
+    summary: "Lounge chair shot for a furniture brand launch — studio + lifestyle sets, plus a 360° turntable for the product page.",
+    image: "https://images.unsplash.com/photo-1567016432779-094069958ea5?auto=format&fit=crop&w=1800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1567016432779-094069958ea5?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1800&q=85",
+    ],
+    featured: false, size: "square" },
+
+  { id: "p07", num: "07", slug: "axis-tower", title: "Axis Tower", category: "3d-modeling",
+    location: "Hyderabad, IN", year: "2023", scope: "Commercial Tower / Model + Renders",
+    tags: ["3D Modeling", "Commercial"],
+    summary: "Forty-two storey commercial tower modeled from architect drawings — production-ready geometry, PBR textures, ready for the developer's animation team.",
+    image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=85",
+    ],
+    featured: false, size: "tall" },
+
+  { id: "p08", num: "08", slug: "onyx-lounge", title: "Onyx Lounge", category: "interior",
+    location: "Mumbai, IN", year: "2024", scope: "Hospitality / Bar + Lounge",
+    tags: ["Hospitality", "Bar", "Night"],
+    summary: "A hotel lobby bar rendered after-hours: deep onyx tabletops, brushed brass rails, low-key lighting that lets the back-bar glow do the work.",
+    image: "https://images.unsplash.com/photo-1604014237800-1c9102c219da?auto=format&fit=crop&w=1800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1604014237800-1c9102c219da?auto=format&fit=crop&w=1800&q=85",
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1800&q=85",
+    ],
+    featured: true, size: "wide" },
+];
+
+window.SOA_SERVICES = [
+  {
+    name: "Interior Renders",
+    num: "01",
+    tagline: "Photoreal interior visualization that makes clients say yes.",
+    blueprint: { price: "$149", includes: ["1 hero angle, 4K", "2 revision rounds", "5–7 day turnaround", "Daylight OR dusk"] },
+    signature: { price: "$449", includes: ["4 hero angles, 8K", "Unlimited revisions", "3 day turnaround", "Full day / dusk / night pass", "Post-production polish"] },
+  },
+  {
+    name: "Exterior Renders",
+    num: "02",
+    tagline: "Facades and volumes, lit for magazine covers.",
+    blueprint: { price: "$199", includes: ["1 hero angle, 4K", "2 revisions", "7 day turnaround", "Ground-plane landscaping"] },
+    signature: { price: "$549", includes: ["3 hero angles + aerial", "Unlimited revisions", "5 day turnaround", "Weather + lighting variants", "Context + entourage"] },
+  },
+  {
+    name: "Product Visualization",
+    num: "03",
+    tagline: "Hero shots for furniture, fixtures, and finishes.",
+    blueprint: { price: "$79", includes: ["1 product, white-room", "3 angles, 4K", "2 revisions", "4 day turnaround"] },
+    signature: { price: "$249", includes: ["Lifestyle + studio sets", "Unlimited angles", "Unlimited revisions", "Animated turntable included"] },
+  },
+  {
+    name: "3D Modeling",
+    num: "04",
+    tagline: "Clean, production-ready assets from drawings or photos.",
+    blueprint: { price: "$99", includes: ["Single object", "Low/mid poly", "FBX + OBJ", "1 texture set"] },
+    signature: { price: "$399", includes: ["Full scene modeling", "PBR texturing", "Game-engine ready", "Rig / UV on request"] },
+  },
+];
+
+window.SOA_PROCESS = [
+  { n: "01", label: "Brief", body: "We review your drawings, references, and intent. Fixed scope, fixed deadline." },
+  { n: "02", label: "Model", body: "Clay pass for composition and light. You approve angles before textures." },
+  { n: "03", label: "Render", body: "Final lighting, materials, post. Delivered in variants — day, dusk, night." },
+  { n: "04", label: "Deliver", body: "Source files, print-ready masters, and a revision window. No surprises." },
+];
+</script>
+
+<script type="text/babel">
+// core.jsx — Cursor + Nav + helpers
+const { useEffect, useRef, useState, useMemo, useLayoutEffect } = React;
+
+function CustomCursor() {
+  const dotRef = useRef(null);
+  const ringRef = useRef(null);
+  const [mode, setMode] = useState("");
+
+  useEffect(() => {
+    const dot = dotRef.current, ring = ringRef.current;
+    const xSet = gsap.quickTo(dot, "x", { duration: 0.08, ease: "power3.out" });
+    const ySet = gsap.quickTo(dot, "y", { duration: 0.08, ease: "power3.out" });
+    const rxSet = gsap.quickTo(ring, "x", { duration: 0.32, ease: "power3.out" });
+    const rySet = gsap.quickTo(ring, "y", { duration: 0.32, ease: "power3.out" });
+
+    const onMove = (e) => {
+      xSet(e.clientX); ySet(e.clientY);
+      rxSet(e.clientX); rySet(e.clientY);
+    };
+    window.addEventListener("mousemove", onMove);
+
+    const handleOver = (e) => {
+      const t = e.target.closest("[data-cursor]");
+      if (!t) { setMode(""); return; }
+      setMode(t.getAttribute("data-cursor") || "");
+    };
+    window.addEventListener("mouseover", handleOver);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseover", handleOver);
+    };
+  }, []);
+
+  return (
+    <>
+      <div ref={dotRef} className="cursor-dot" />
+      <div ref={ringRef} className={`cursor-ring ${mode}`}>{mode === "view" ? "VIEW" : ""}</div>
+    </>
+  );
+}
+
+function SplitLines({ text, className = "", style = {}, reveal = true, delay = 0 }) {
+  const lines = text.split("\n");
+  const refs = useRef([]);
+  useEffect(() => {
+    if (!reveal) return;
+    let cancelled = false;
+    requestAnimationFrame(() => {
+      if (cancelled) return;
+      const els = refs.current.filter(Boolean);
+      if (!els.length) return;
+      gsap.fromTo(els,
+        { yPercent: 110 },
+        { yPercent: 0, duration: 1.1, ease: "expo.out", stagger: 0.08, delay, overwrite: "auto" }
+      );
+    });
+    const safety = setTimeout(() => {
+      const els = refs.current.filter(Boolean);
+      els.forEach(el => { if (el) el.style.transform = "translateY(0%)"; });
+    }, 2200 + delay * 1000);
+    return () => { cancelled = true; clearTimeout(safety); };
+  }, [reveal, delay, text]);
+  return (
+    <span className={className} style={style}>
+      {lines.map((l, i) => (
+        <span className="line-mask" key={i}>
+          <span className="line-inner" ref={(el) => refs.current[i] = el}
+                dangerouslySetInnerHTML={{ __html: l }} />
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function BottomNav({ links, scrollTo }) {
+  const [active, setActive] = useState("portfolio");
+  const [visible, setVisible] = useState(false);
+  const itemRefs = useRef({});
+  const pillRef = useRef(null);
+  const containerRef = useRef(null);
+  const firstMove = useRef(true);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setVisible(window.scrollY > 200);
+      const anchor = window.innerHeight * 0.35;
+      let best = { id: links[0][1], dist: Infinity };
+      links.forEach(([, id]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        if (r.top <= anchor && r.bottom > anchor) {
+          const d = Math.abs(r.top - anchor);
+          if (d < best.dist) best = { id, dist: d };
+        }
+      });
+      setActive(best.id);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [links]);
+
+  useEffect(() => {
+    const item = itemRefs.current[active];
+    const container = containerRef.current;
+    const pill = pillRef.current;
+    if (!item || !container || !pill) return;
+    const itemR = item.getBoundingClientRect();
+    const contR = container.getBoundingClientRect();
+    const x = itemR.left - contR.left;
+    const w = itemR.width;
+    if (firstMove.current) {
+      gsap.set(pill, { x, width: w, opacity: 1 });
+      firstMove.current = false;
+    } else {
+      gsap.to(pill, { x, width: w, duration: 0.7, ease: "expo.out" });
+    }
+  }, [active, visible]);
+
+  return (
+    <div className="bottom-nav-wrap" style={{
+      position: "fixed", left: 0, right: 0, bottom: 24, zIndex: 98,
+      display: "flex", justifyContent: "center",
+      pointerEvents: "none",
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0)" : "translateY(24px)",
+      transition: "opacity .5s cubic-bezier(.2,.8,.2,1), transform .5s cubic-bezier(.2,.8,.2,1)",
+    }}>
+      <div ref={containerRef} style={{
+        pointerEvents: "auto",
+        position: "relative",
+        display: "flex", gap: 4, alignItems: "center",
+        padding: 6,
+        background: "rgba(10,10,10,0.55)",
+        backdropFilter: "blur(20px) saturate(160%)",
+        WebkitBackdropFilter: "blur(20px) saturate(160%)",
+        border: "1px solid rgba(240,237,232,0.14)",
+        borderRadius: 999,
+        boxShadow: "0 20px 60px -20px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06)",
+        fontFamily: "var(--f-ui)", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase",
+      }}>
+        <div ref={pillRef} aria-hidden style={{
+          position: "absolute",
+          top: 6, bottom: 6, left: 0,
+          borderRadius: 999,
+          background: "var(--color-accent)",
+          opacity: 0,
+          zIndex: 0,
+          pointerEvents: "none",
+          willChange: "transform, width",
+        }} />
+        {links.map(([l, id], i) => {
+          const isActive = active === id;
+          return (
+            <a key={id} href={`#${id}`} onClick={scrollTo(id)} data-cursor="link"
+               ref={(el) => itemRefs.current[id] = el}
+               style={{
+                 position: "relative",
+                 zIndex: 1,
+                 padding: "10px 18px",
+                 borderRadius: 999,
+                 color: isActive ? "var(--color-bg)" : "var(--color-text-secondary)",
+                 transition: "color .45s cubic-bezier(.2,.8,.2,1)",
+                 fontWeight: isActive ? 500 : 300,
+                 display: "inline-flex", alignItems: "center", gap: 8,
+               }}
+               onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = "var(--color-text-primary)"; }}
+               onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = "var(--color-text-secondary)"; }}>
+              <span style={{
+                fontFamily: "var(--f-mono)", fontSize: 9,
+                color: isActive ? "var(--color-bg)" : "var(--color-text-dim)",
+                opacity: 0.75,
+                transition: "color .45s cubic-bezier(.2,.8,.2,1)"
+              }}>0{i + 1}</span>
+              <span>{l}</span>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const overlayRef = useRef(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!overlayRef.current) return;
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+      gsap.fromTo(overlayRef.current,
+        { clipPath: "inset(0 0 100% 0)" },
+        { clipPath: "inset(0 0 0% 0)", duration: 0.7, ease: "expo.out" });
+      gsap.fromTo(overlayRef.current.querySelectorAll("a"),
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, stagger: 0.06, ease: "expo.out", delay: 0.15 });
+    } else {
+      document.body.style.overflow = "";
+      gsap.to(overlayRef.current, { clipPath: "inset(0 0 100% 0)", duration: 0.5, ease: "expo.in" });
+    }
+  }, [menuOpen]);
+
+  const scrollTo = (id) => (e) => {
+    e.preventDefault();
+    setMenuOpen(false);
+    if (id === "work") {
+      window.location.hash = "/gallery";
+      return;
+    }
+    if (id === "top") {
+      if ((window.location.hash || "").startsWith("#/") && window.location.hash !== "#/") {
+        window.location.hash = "/";
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      return;
+    }
+    const onHome = !window.location.hash || window.location.hash === "#/" || window.location.hash === "#";
+    if (!onHome) {
+      window.location.hash = `/${id}`;
+      return;
+    }
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+  };
+
+  const links = [
+    ["Work", "work"],
+    ["Services", "services"],
+    ["Process", "process"],
+    ["Contact", "contact"],
+  ];
+
+  return (
+    <>
+    <nav style={{
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+      padding: scrolled ? "12px clamp(20px, 4vw, 48px)" : "22px clamp(20px, 4vw, 48px)",
+      transition: "all .45s cubic-bezier(.2,.8,.2,1)",
+      background: scrolled || menuOpen ? "rgba(10,10,10,0.72)" : "transparent",
+      backdropFilter: scrolled || menuOpen ? "blur(14px)" : "none",
+      borderBottom: scrolled ? "1px solid var(--color-border)" : "1px solid transparent",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      fontFamily: "var(--f-ui)", fontSize: 12, letterSpacing: "0.22em", textTransform: "uppercase"
+    }}>
+      <a href="#top" data-cursor="link" onClick={scrollTo("top")} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{
+          width: 8, height: 8, background: "var(--color-accent)",
+          borderRadius: 999, display: "inline-block"
+        }} />
+        <span style={{ fontWeight: 500 }}>Studio<span style={{ color: "var(--color-text-dim)", margin: "0 6px" }}>/</span>Anarchy</span>
+      </a>
+
+      <a href="#contact" data-cursor="link" onClick={scrollTo("contact")}
+         className="desktop-nav"
+         style={{ display: "inline-flex", alignItems: "center", gap: 10, color: "var(--color-accent)" }}>
+        <span>Hire the studio</span>
+        <span style={{ width: 24, height: 1, background: "currentColor", display: "inline-block" }} />
+      </a>
+
+      <button className={"mobile-menu-btn " + (menuOpen ? "open" : "")}
+        data-cursor="link" aria-label="Menu"
+        onClick={() => setMenuOpen(!menuOpen)}>
+        <span /><span />
+      </button>
+    </nav>
+
+    <BottomNav links={links} scrollTo={scrollTo} />
+
+    <div ref={overlayRef} className="mobile-overlay">
+      <span className="mono-label" style={{ color: "var(--color-accent)", marginBottom: 24 }}>— Index</span>
+      {links.map(([l, id], i) => (
+        <a key={id} href={`#${id}`} data-cursor="link" onClick={scrollTo(id)}>
+          <span style={{ fontFamily: "var(--f-mono)", fontSize: 12, letterSpacing: "0.2em", color: "var(--color-text-dim)", marginRight: 18, verticalAlign: "middle" }}>0{i+1}</span>
+          {i === 3 ? <em>{l}</em> : l}
+        </a>
+      ))}
+      <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 14, paddingTop: 32 }}>
+        <a href="#" data-cursor="link" className="btn primary" style={{ justifyContent: "space-between", fontFamily: "var(--f-ui)", fontSize: 12, textTransform: "uppercase" }}>
+          Hire on Fiverr <span className="arrow" />
+        </a>
+        <span className="mono-label">hello@studioofanarchy.com</span>
+      </div>
+    </div>
+    </>
+  );
+}
+
+window.__SOA_CORE = { CustomCursor, Navbar, SplitLines, BottomNav };
+</script>
+
+<script type="text/babel">
+// hero-intro.jsx
+const { useEffect: useEff1, useRef: useRef1, useState: useState1 } = React;
+const { CustomCursor, Navbar, SplitLines, BottomNav } = window.__SOA_CORE;
+
+const ANARCHY_FONTS = [
+  { family: "'Cormorant Garamond', serif", weight: 600, italic: true, style: { letterSpacing: "-0.02em" } },
+  { family: "'Playfair Display', serif", weight: 900, italic: true, style: { letterSpacing: "-0.03em" } },
+  { family: "'Bebas Neue', sans-serif", weight: 400, italic: false, style: { letterSpacing: "0.02em", textTransform: "uppercase" } },
+  { family: "'Major Mono Display', monospace", weight: 400, italic: false, style: { letterSpacing: "-0.02em", textTransform: "lowercase" } },
+  { family: "'Abril Fatface', serif", weight: 400, italic: false, style: { letterSpacing: "-0.02em" } },
+];
+
+function AnarchyTypewriter() {
+  const WORD = "Anarchy";
+  const [fontIdx, setFontIdx] = useState1(0);
+  const [typed, setTyped] = useState1("");
+  const [phase, setPhase] = useState1("typing");
+
+  useEff1(() => {
+    let timeout;
+    if (phase === "typing") {
+      if (typed.length < WORD.length) {
+        timeout = setTimeout(() => setTyped(WORD.slice(0, typed.length + 1)), 110);
+      } else {
+        timeout = setTimeout(() => setPhase("hold"), 900);
+      }
+    } else if (phase === "hold") {
+      timeout = setTimeout(() => setPhase("deleting"), 650);
+    } else if (phase === "deleting") {
+      if (typed.length > 0) {
+        timeout = setTimeout(() => setTyped(typed.slice(0, -1)), 55);
+      } else {
+        timeout = setTimeout(() => {
+          setFontIdx((fontIdx + 1) % ANARCHY_FONTS.length);
+          setPhase("typing");
+        }, 200);
+      }
+    }
+    return () => clearTimeout(timeout);
+  }, [phase, typed, fontIdx]);
+
+  const f = ANARCHY_FONTS[fontIdx];
+
+  return (
+    <span style={{ display: "inline-flex", alignItems: "baseline" }}>
+      <span style={{
+        fontFamily: f.family,
+        fontWeight: f.weight,
+        fontStyle: f.italic ? "italic" : "normal",
+        color: "var(--color-accent)",
+        display: "inline-block",
+        minWidth: "0.1em",
+        ...f.style,
+      }}>
+        {typed || " "}
+      </span>
+      <span aria-hidden className="anarchy-caret" style={{
+        display: "inline-block",
+        width: "0.06em",
+        height: "0.85em",
+        background: "var(--color-accent)",
+        marginLeft: "0.04em",
+        alignSelf: "center",
+      }} />
+      <span style={{ color: "var(--color-accent)", fontStyle: "italic", fontWeight: 300 }}>.</span>
+    </span>
+  );
+}
+
+const HERO_SLIDES = [
+  { src: "https://images.unsplash.com/photo-1615529182904-14819c35db37?auto=format&fit=crop&w=1800&q=85",
+    label: "Ash Residence / Bengaluru", tag: "Featured" },
+  { src: "https://images.unsplash.com/photo-1618219944342-824e40a13285?auto=format&fit=crop&w=1800&q=85",
+    label: "Onyx Lounge / Mumbai", tag: "Hospitality" },
+  { src: "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1800&q=85",
+    label: "Vantage Penthouse / Delhi", tag: "Penthouse" },
+  { src: "https://images.unsplash.com/photo-1616137466211-f939a420be84?auto=format&fit=crop&w=1800&q=85",
+    label: "Monolith House / Goa", tag: "Residential" },
+];
+
+function HeroCarousel({ imgRef }) {
+  const [i, setI] = useState1(0);
+  const [paused, setPaused] = useState1(false);
+  const slideRefs = useRef1([]);
+  const touchRef = useRef1({ x: 0, active: false });
+
+  useEff1(() => {
+    if (paused) return;
+    const t = setInterval(() => setI(v => (v + 1) % HERO_SLIDES.length), 4500);
+    return () => clearInterval(t);
+  }, [paused]);
+
+  useEff1(() => {
+    slideRefs.current.forEach((el, idx) => {
+      if (!el) return;
+      gsap.to(el, {
+        opacity: idx === i ? 1 : 0,
+        scale: idx === i ? 1 : 1.04,
+        duration: 1.1, ease: "expo.out"
+      });
+    });
+  }, [i]);
+
+  const onTouchStart = (e) => { touchRef.current = { x: e.touches[0].clientX, active: true }; };
+  const onTouchEnd = (e) => {
+    if (!touchRef.current.active) return;
+    const dx = e.changedTouches[0].clientX - touchRef.current.x;
+    if (Math.abs(dx) > 50) {
+      setI(v => dx < 0 ? (v + 1) % HERO_SLIDES.length : (v - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+    }
+    touchRef.current.active = false;
+  };
+
+  return (
+    <div className="hero-image-wrap" style={{
+      position: "relative",
+      aspectRatio: "4 / 5",
+      overflow: "hidden",
+      background: "var(--color-surface-2)",
+    }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
+    >
+      {HERO_SLIDES.map((s, idx) => (
+        <img key={s.src}
+          ref={(el) => {
+            slideRefs.current[idx] = el;
+            if (idx === 0 && imgRef) imgRef.current = el;
+          }}
+          src={s.src}
+          alt={s.label}
+          loading={idx === 0 ? "eager" : "lazy"}
+          style={{
+            position: "absolute", inset: 0,
+            width: "100%", height: "100%", objectFit: "cover",
+            opacity: idx === 0 ? 1 : 0,
+            willChange: "opacity, transform"
+          }} />
+      ))}
+      <div style={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        background: "linear-gradient(to top, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0) 40%)"
+      }} />
+      <div style={{
+        position: "absolute", left: 16, bottom: 16, right: 16,
+        display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12
+      }}>
+        <div style={{
+          padding: "8px 14px", border: "1px solid rgba(240,237,232,0.25)",
+          backdropFilter: "blur(10px)", background: "rgba(10,10,10,0.35)",
+          fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.22em",
+          textTransform: "uppercase", color: "var(--color-text-primary)"
+        }}>
+          {HERO_SLIDES[i].tag} · {HERO_SLIDES[i].label}
+        </div>
+        <div style={{
+          fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.22em",
+          color: "var(--color-text-primary)",
+          padding: "8px 12px", background: "rgba(10,10,10,0.35)", backdropFilter: "blur(10px)",
+          border: "1px solid rgba(240,237,232,0.25)",
+        }}>
+          {String(i + 1).padStart(2, "0")} / {String(HERO_SLIDES.length).padStart(2, "0")}
+        </div>
+      </div>
+      <div style={{ position: "absolute", top: 16, right: 16, display: "flex", gap: 6 }}>
+        {HERO_SLIDES.map((_, idx) => (
+          <button key={idx} data-cursor="link" aria-label={`Slide ${idx + 1}`}
+            onClick={() => setI(idx)}
+            style={{
+              width: idx === i ? 24 : 8, height: 8, borderRadius: 999,
+              background: idx === i ? "var(--color-accent)" : "rgba(240,237,232,0.4)",
+              transition: "all .4s cubic-bezier(.2,.8,.2,1)",
+              border: "none", padding: 0
+            }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Hero() {
+  const imgRef = useRef1(null);
+  const wrapRef = useRef1(null);
+
+  useEff1(() => {
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 901px)", () => {
+        gsap.to(imgRef.current, {
+          yPercent: 14, ease: "none",
+          scrollTrigger: { trigger: wrapRef.current, start: "top top", end: "bottom top", scrub: true }
+        });
+      });
+      gsap.fromTo(imgRef.current,
+        { clipPath: "inset(100% 0 0 0)" },
+        { clipPath: "inset(0% 0 0 0)", duration: 1.6, ease: "expo.out", delay: 0.1 }
+      );
+    }, wrapRef);
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <section id="top" ref={wrapRef} style={{
+      position: "relative", minHeight: "100vh", paddingTop: 120,
+      overflow: "hidden"
+    }}>
+      <div className="container hero-top-meta hero-meta" style={{ display: "flex", justifyContent: "space-between", paddingTop: 8, paddingBottom: 32 }}>
+        <span className="mono-label">N° 001 — ArchViz Studio</span>
+        <span className="mono-label">Est. 2015 · Bengaluru ⇄ Everywhere</span>
+        <span className="mono-label">50+ Projects · Based in India</span>
+      </div>
+
+      <div className="container" style={{ position: "relative" }}>
+        <h1 className="display" style={{ fontSize: "clamp(64px, 13.5vw, 240px)", letterSpacing: "-0.03em", lineHeight: 0.88 }}>
+          <SplitLines text={`Studio of`} reveal />
+          <span style={{ display: "block" }}>
+            <AnarchyTypewriter />
+          </span>
+        </h1>
+
+        <div className="hero-layout" style={{
+          marginTop: "clamp(-40px, -3vw, -20px)",
+          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "end"
+        }}>
+          <div style={{ paddingBottom: 12, paddingRight: 20 }}>
+            <span className="mono-label" style={{ display: "block", marginBottom: 18 }}>— Where spaces come alive</span>
+            <p style={{
+              fontFamily: "var(--f-display)", fontStyle: "italic", fontWeight: 300,
+              fontSize: "clamp(20px, 2vw, 30px)", lineHeight: 1.25, color: "var(--color-text-secondary)",
+              maxWidth: 440
+            }}>
+              A design-led visualization studio translating architecture into images that close the deal.
+            </p>
+            <div className="hero-ctas" style={{ display: "flex", gap: 14, marginTop: 36, flexWrap: "wrap" }}>
+              <button className="btn primary" data-cursor="link"
+                onClick={() => document.getElementById("portfolio").scrollIntoView({ behavior: "smooth" })}>
+                View Work <span className="arrow" />
+              </button>
+              <a className="btn" data-cursor="link" href="#" onClick={(e) => e.preventDefault()}>
+                Hire on Fiverr <span className="arrow" />
+              </a>
+            </div>
+          </div>
+
+          <HeroCarousel imgRef={imgRef} />
+        </div>
+
+        <div className="hero-bottom-hint" style={{
+          display: "flex", justifyContent: "space-between", marginTop: 48, paddingTop: 24, paddingBottom: 8,
+          borderTop: "1px solid var(--color-border)",
+          fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.22em",
+          textTransform: "uppercase", color: "var(--color-text-dim)", gap: 16, flexWrap: "wrap"
+        }}>
+          <span>Scroll ↓</span>
+          <span>[ Interior · Exterior · Product · 3D Modeling ]</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function useReveal(sel, opts = {}) {
+  useEff1(() => {
+    const ctx = gsap.context(() => {
+      gsap.utils.toArray(sel).forEach((el, i) => {
+        gsap.from(el, {
+          y: 40, opacity: 0, duration: 1.1, ease: "expo.out",
+          delay: (opts.stagger || 0) * i,
+          scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none none" }
+        });
+      });
+    });
+    return () => ctx.revert();
+  }, []);
+}
+
+function Counter({ to, suffix = "", duration = 2 }) {
+  const ref = useRef1(null);
+  useEff1(() => {
+    const ctx = gsap.context(() => {
+      const obj = { v: 0 };
+      gsap.to(obj, {
+        v: to, duration, ease: "power2.out",
+        scrollTrigger: { trigger: ref.current, start: "top 85%", once: true },
+        onUpdate: () => { if (ref.current) ref.current.textContent = Math.round(obj.v) + suffix; }
+      });
+    }, ref);
+    return () => ctx.revert();
+  }, []);
+  return <span ref={ref}>0{suffix}</span>;
+}
+
+function ClipImage({ src, alt, aspect = "16/9", style = {} }) {
+  const ref = useRef1(null);
+  useEff1(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(ref.current,
+        { clipPath: "inset(0 100% 0 0)" },
+        {
+          clipPath: "inset(0 0% 0 0)",
+          duration: 1.4, ease: "expo.out",
+          scrollTrigger: { trigger: ref.current, start: "top 85%", once: true }
+        }
+      );
+    }, ref);
+    return () => ctx.revert();
+  }, []);
+  return (
+    <div style={{ aspectRatio: aspect, background: "var(--color-surface-2)", overflow: "hidden", ...style }}>
+      <img ref={ref} src={src} alt={alt}
+        style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+    </div>
+  );
+}
+
+function Intro() {
+  useReveal(".intro-row > *", { stagger: 0.08 });
+  const quoteRef = useRef1(null);
+  useEff1(() => {
+    const ctx = gsap.context(() => {
+      gsap.utils.toArray(".quote-line-inner", quoteRef.current).forEach((el, i) => {
+        gsap.from(el, {
+          yPercent: 110, duration: 1.1, ease: "expo.out", delay: i * 0.08,
+          scrollTrigger: { trigger: quoteRef.current, start: "top 75%", once: true }
+        });
+      });
+    }, quoteRef);
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <section id="about" style={{ padding: "180px 0 120px" }}>
+      <div className="container">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 32, marginBottom: 100 }}>
+          <div style={{ gridColumn: "span 3" }}>
+            <span className="mono-label">— (Manifesto / 002)</span>
+          </div>
+          <div style={{ gridColumn: "span 9" }} ref={quoteRef}>
+            <h2 className="display" style={{ fontSize: "clamp(40px, 5.6vw, 96px)" }}>
+              <span className="line-mask"><span className="quote-line-inner">We translate architecture</span></span>
+              <span className="line-mask"><span className="quote-line-inner">into images that make</span></span>
+              <span className="line-mask"><span className="quote-line-inner" style={{ fontStyle: "italic", color: "var(--color-accent)" }}>clients say yes.</span></span>
+            </h2>
+          </div>
+        </div>
+
+        <div className="stat-grid-mobile" style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(12, 1fr)",
+          gridTemplateRows: "auto auto",
+          gap: 32,
+          borderTop: "1px solid var(--color-border)",
+          paddingTop: 48,
+        }}>
+          <div className="intro-row" style={{ gridColumn: "1 / span 4", gridRow: "1" }}>
+            <span className="mono-label" style={{ display: "block", marginBottom: 24 }}>At the Studio</span>
+            <p style={{ fontFamily: "var(--f-display)", fontSize: 28, lineHeight: 1.3, fontWeight: 300, color: "var(--color-text-primary)" }}>
+              We are a decade into reimagining the language of space — and rewriting the rules of how a render should
+              <em style={{ color: "var(--color-accent)" }}> feel.</em>
+            </p>
+            <p style={{ marginTop: 22, color: "var(--color-text-secondary)", maxWidth: 380 }}>
+              Photoreal is the floor, not the ceiling. Every shot is lit, composed, and graded with the intent of a magazine cover.
+            </p>
+          </div>
+
+          <div className="intro-row" style={{ gridColumn: "5 / span 2", gridRow: "1", borderLeft: "1px solid var(--color-border)", paddingLeft: 20 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span className="display" style={{ fontSize: 84, color: "var(--color-text-primary)" }}>
+                <Counter to={10} suffix="" />
+              </span>
+              <span style={{ color: "var(--color-text-dim)", fontFamily: "var(--f-mono)", fontSize: 14 }}>yrs</span>
+            </div>
+            <p className="mono-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
+              Years into reimagining space
+            </p>
+          </div>
+
+          <div className="intro-row" style={{
+            gridColumn: "7 / span 3", gridRow: "1",
+            background: "var(--color-accent)", color: "var(--color-bg)",
+            padding: "28px 28px", display: "flex", flexDirection: "column", justifyContent: "space-between",
+            minHeight: 220,
+          }}>
+            <p style={{ fontFamily: "var(--f-display)", fontSize: 24, lineHeight: 1.25, fontWeight: 600 }}>
+              Design isn't just what you see — it's how a space <em style={{ fontWeight: 600, fontStyle: "italic", color: "var(--color-bg)" }}>lives</em> with you.
+            </p>
+            <button className="btn" style={{ alignSelf: "flex-start", borderColor: "var(--color-bg)", color: "var(--color-bg)" }}
+              data-cursor="link"
+              onMouseEnter={(e)=>{e.currentTarget.style.background="var(--color-bg)";e.currentTarget.style.color="var(--color-accent)";}}
+              onMouseLeave={(e)=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="var(--color-bg)";}}
+            >Our approach <span className="arrow" /></button>
+          </div>
+
+          <div className="intro-row" style={{ gridColumn: "10 / span 3", gridRow: "1", borderLeft: "1px solid var(--color-border)", paddingLeft: 20 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span className="display" style={{ fontSize: 84, color: "var(--color-text-primary)" }}>
+                <Counter to={50} suffix="+" />
+              </span>
+            </div>
+            <p className="mono-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
+              Completed projects<br/> shipped pan-India
+            </p>
+          </div>
+
+          <div className="intro-row clip-reveal-trigger" style={{ gridColumn: "1 / span 6", gridRow: "2", marginTop: 40 }}>
+            <ClipImage
+              src="https://images.unsplash.com/photo-1600210492493-0946911123ea?auto=format&fit=crop&w=1800&q=85"
+              alt="Studio still life"
+              aspect="16/10" />
+          </div>
+
+          <div className="intro-row" style={{ gridColumn: "7 / span 6", gridRow: "2", marginTop: 40, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+            <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 22 }}>
+              <div className="display" style={{ fontSize: 64 }}><Counter to={14} suffix="+" /></div>
+              <p className="mono-label" style={{ marginTop: 10 }}>Indian cities — Bengaluru, Mumbai, Delhi, Goa.</p>
+            </div>
+            <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 22 }}>
+              <div className="display" style={{ fontSize: 64, color: "var(--color-accent)", fontStyle: "italic" }}>{"< 24h"}</div>
+              <p className="mono-label" style={{ marginTop: 10 }}>Average reply time — every brief answered inside a day.</p>
+            </div>
+            <div style={{ gridColumn: "span 2", marginTop: 22 }}>
+              <p style={{ color: "var(--color-text-secondary)", fontFamily: "var(--f-display)", fontSize: 22, lineHeight: 1.4 }}>
+                From first moodboard to final master — we stay on the call, the cloud, and the render farm until every pixel earns its place.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+window.__SOA_HERO = { Hero, Intro, Counter, ClipImage, useReveal, AnarchyTypewriter, HeroCarousel };
+</script>
+
+<script type="text/babel">
+// portfolio-services.jsx
+const { useEffect: useEff2, useRef: useRef2, useState: useState2, useMemo: useMemo2 } = React;
+
+function ProjectTile({ p, i, onOpen }) {
+  const ref = useRef2(null);
+  const imgRef = useRef2(null);
+  useEff2(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(imgRef.current,
+        { clipPath: "inset(0 100% 0 0)" },
+        {
+          clipPath: "inset(0 0% 0 0)",
+          duration: 1.3, ease: "expo.out",
+          scrollTrigger: { trigger: ref.current, start: "top 88%", once: true },
+        }
+      );
+    }, ref);
+    return () => ctx.revert();
+  }, []);
+
+  const spans = {
+    "tall":   { col: "span 5", aspect: "3 / 4" },
+    "wide":   { col: "span 7", aspect: "16 / 10" },
+    "square": { col: "span 6", aspect: "1 / 1" },
+  };
+  const layoutClass = p.size || ["wide", "tall", "square", "wide"][i % 4];
+  const s = spans[layoutClass];
+
+  return (
+    <article ref={ref} data-cursor="view"
+      onClick={onOpen}
+      style={{
+        gridColumn: s.col,
+        position: "relative",
+        overflow: "hidden",
+        background: "var(--color-surface-2)",
+        cursor: "none",
+      }}>
+      <div style={{ aspectRatio: s.aspect, overflow: "hidden", position: "relative" }}>
+        <img ref={imgRef} src={p.image} alt={p.title}
+          loading="lazy"
+          style={{
+            width: "100%", height: "100%", objectFit: "cover",
+            transition: "transform 1s cubic-bezier(.2,.8,.2,1), filter .5s",
+            filter: "brightness(0.92)"
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.03)"; e.currentTarget.style.filter = "brightness(1)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.filter = "brightness(0.92)"; }}
+        />
+      </div>
+      <div style={{
+        position: "absolute", top: 16, left: 16,
+        fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.22em",
+        textTransform: "uppercase", color: "var(--color-text-primary)",
+        mixBlendMode: "difference"
+      }}>
+        N° {p.num}
+      </div>
+      <div style={{ padding: "18px 4px 0", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 16 }}>
+          <h3 className="display" style={{ fontSize: 28, fontWeight: 400, letterSpacing: "-0.01em" }}>{p.title}</h3>
+          <span className="mono-label" style={{ color: "var(--color-accent)", whiteSpace: "nowrap" }}>{p.category.replace("-", " ")}</span>
+        </div>
+        <div className="mono-label">{p.tags.join(" · ")}</div>
+      </div>
+    </article>
+  );
+}
+
+function Portfolio() {
+  const [filter, setFilter] = useState2("all");
+
+  const cats = [
+    ["all", "All"],
+    ["interior", "Interior"],
+    ["exterior", "Exterior"],
+    ["product", "Product"],
+    ["3d-modeling", "3D Modeling"],
+  ];
+
+  const items = useMemo2(() =>
+    window.SOA_PROJECTS.filter(p => filter === "all" || p.category === filter),
+    [filter]);
+
+  const headerRef = useRef2(null);
+  useEff2(() => {
+    const ctx = gsap.context(() => {
+      gsap.utils.toArray(".port-head-line", headerRef.current).forEach((el, i) => {
+        gsap.from(el, {
+          yPercent: 110, duration: 1.1, ease: "expo.out", delay: i * 0.08,
+          scrollTrigger: { trigger: headerRef.current, start: "top 78%", once: true }
+        });
+      });
+    }, headerRef);
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <section id="portfolio" style={{ padding: "140px 0 120px", borderTop: "1px solid var(--color-border)" }}>
+      <div className="container">
+        <div ref={headerRef} style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 32, marginBottom: 56 }}>
+          <div style={{ gridColumn: "1 / span 5" }}>
+            <span className="mono-label">— (Index / 003)</span>
+            <h2 className="display" style={{ fontSize: "clamp(48px, 7vw, 120px)", marginTop: 18 }}>
+              <span className="line-mask"><span className="port-head-line" style={{ display: "block" }}>Selected</span></span>
+              <span className="line-mask"><span className="port-head-line" style={{ display: "block", fontStyle: "italic", color: "var(--color-accent)" }}>works</span></span>
+            </h2>
+          </div>
+          <div style={{ gridColumn: "7 / span 6", alignSelf: "end" }}>
+            <p style={{ color: "var(--color-text-secondary)", fontSize: 17, maxWidth: 480 }}>
+              A running index of renders shipped over the last decade. Click any frame to see it at scale.
+            </p>
+          </div>
+        </div>
+
+        <div style={{
+          display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 56,
+          paddingBottom: 24, borderBottom: "1px solid var(--color-border)"
+        }}>
+          {cats.map(([k, l]) => (
+            <button key={k} data-cursor="link" onClick={() => setFilter(k)}
+              style={{
+                padding: "10px 18px",
+                border: "1px solid " + (filter === k ? "var(--color-accent)" : "var(--color-border)"),
+                borderRadius: 999,
+                background: filter === k ? "var(--color-accent)" : "transparent",
+                color: filter === k ? "var(--color-bg)" : "var(--color-text-secondary)",
+                fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase",
+                transition: "all .3s",
+              }}>
+              {l} <span style={{ opacity: 0.55, marginLeft: 6 }}>
+                [{k === "all" ? window.SOA_PROJECTS.length : window.SOA_PROJECTS.filter(p => p.category === k).length}]
+              </span>
+            </button>
+          ))}
+          <div style={{ marginLeft: "auto", alignSelf: "center" }} className="mono-label">
+            Showing {items.length} / {window.SOA_PROJECTS.length}
+          </div>
+        </div>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(12, 1fr)",
+          gap: 24,
+        }} className="portfolio-grid-mobile">
+          {items.map((p, i) => <ProjectTile key={p.id} p={p} i={i} onOpen={() => { window.location.hash = `/project/${p.slug}`; }} />)}
+        </div>
+
+        <div style={{ textAlign: "center", marginTop: 80 }}>
+          <a className="btn" data-cursor="link" href="#/gallery" style={{ textDecoration: "none" }}>See full archive <span className="arrow" /></a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PricingCard({ tier, num, pkg, primary, style }) {
+  const [open, setOpen] = useState2(!!primary);
+  return (
+    <div style={{
+      ...style,
+      border: "1px solid " + (primary ? "var(--color-accent)" : "var(--color-border)"),
+      padding: "28px 24px",
+      paddingTop: primary ? 44 : 28,
+      background: primary ? "var(--color-surface)" : "transparent",
+      display: "flex", flexDirection: "column", gap: 18,
+      position: "relative"
+    }}>
+      {primary && (
+        <div style={{
+          position: "absolute", top: 14, right: 14,
+          background: "var(--color-accent)", color: "var(--color-bg)",
+          padding: "6px 12px", fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.22em",
+          zIndex: 2
+        }}>MOST ORDERED</div>
+      )}
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <span className="mono-label">N° {num}</span>
+          <span className="mono-label" style={{ color: "var(--color-text-secondary)" }}>From {pkg.price}</span>
+        </div>
+        <h4 className="display" style={{
+          fontSize: "clamp(40px, 6vw, 52px)", fontWeight: 300, marginTop: 4, lineHeight: 1,
+          fontStyle: primary ? "italic" : "normal",
+          color: primary ? "var(--color-accent)" : "var(--color-text-primary)"
+        }}>{tier}</h4>
+        <div className="display" style={{
+          fontSize: "clamp(28px, 4vw, 36px)", fontWeight: 400, lineHeight: 1, marginTop: 12,
+          color: "var(--color-text-primary)"
+        }}>{pkg.price}<span style={{ color: "var(--color-text-dim)", fontSize: 14, marginLeft: 8, fontFamily: "var(--f-mono)" }}>/ starting</span></div>
+      </div>
+
+      <div style={{ height: 1, background: "var(--color-border)" }} />
+
+      <button data-cursor="link" onClick={() => setOpen(!open)}
+        className="accordion-toggle"
+        style={{
+          display: "none", justifyContent: "space-between", alignItems: "center",
+          padding: "12px 0", color: "var(--color-text-primary)",
+          fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase",
+          borderBottom: "1px solid var(--color-border)", minHeight: 48
+        }}>
+        <span>What's included</span>
+        <span style={{ color: "var(--color-accent)", transition: "transform .3s", transform: open ? "rotate(45deg)" : "rotate(0)", display: "inline-block", fontSize: 18 }}>+</span>
+      </button>
+
+      <ul className={"pricing-list " + (open ? "open" : "")} style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 12 }}>
+        {pkg.includes.map((x, i) => (
+          <li key={i} style={{ display: "flex", gap: 12, color: "var(--color-text-secondary)", fontSize: 15 }}>
+            <span style={{ color: "var(--color-accent)", fontFamily: "var(--f-mono)", fontSize: 12, marginTop: 4 }}>{String(i+1).padStart(2,"0")}</span>
+            <span>{x}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div style={{ marginTop: "auto", display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <a href="#" onClick={(e)=>e.preventDefault()} data-cursor="link"
+          className={"btn " + (primary ? "primary" : "")} style={{ flex: 1, justifyContent: "space-between", minHeight: 48 }}>
+          Order on Fiverr <span className="arrow" />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function Services() {
+  const [active, setActive] = useState2(0);
+  const headRef = useRef2(null);
+  useEff2(() => {
+    const ctx = gsap.context(() => {
+      gsap.utils.toArray(".svc-head-line", headRef.current).forEach((el, i) => {
+        gsap.from(el, {
+          yPercent: 110, duration: 1.1, ease: "expo.out", delay: i * 0.08,
+          scrollTrigger: { trigger: headRef.current, start: "top 78%", once: true }
+        });
+      });
+      gsap.utils.toArray(".svc-row").forEach((el, i) => {
+        gsap.from(el, {
+          y: 40, opacity: 0, duration: 1, ease: "expo.out", delay: i * 0.05,
+          scrollTrigger: { trigger: el, start: "top 88%", once: true }
+        });
+      });
+    });
+    return () => ctx.revert();
+  }, []);
+
+  const s = window.SOA_SERVICES[active];
+
+  return (
+    <section id="services" style={{ padding: "140px 0 120px", borderTop: "1px solid var(--color-border)" }}>
+      <div className="container">
+        <div ref={headRef} style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 32, marginBottom: 72 }}>
+          <div style={{ gridColumn: "1 / span 7" }}>
+            <span className="mono-label">— (Services + Pricing / 004)</span>
+            <h2 className="display" style={{ fontSize: "clamp(48px, 7vw, 120px)", marginTop: 18 }}>
+              <span className="line-mask"><span className="svc-head-line" style={{ display: "block" }}>Four crafts.</span></span>
+              <span className="line-mask"><span className="svc-head-line" style={{ display: "block", fontStyle: "italic", color: "var(--color-accent)" }}>Two tiers.</span></span>
+            </h2>
+          </div>
+          <div style={{ gridColumn: "9 / span 4", alignSelf: "end" }}>
+            <p style={{ color: "var(--color-text-secondary)", fontSize: 16 }}>
+              Fixed-scope Blueprint for quick wins. Signature for hero shots that carry an entire campaign. Anything larger — we quote.
+            </p>
+          </div>
+        </div>
+
+        <div className="svc-row svc-switcher" style={{
+          display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
+          borderTop: "1px solid var(--color-border)", borderBottom: "1px solid var(--color-border)"
+        }}>
+          {window.SOA_SERVICES.map((svc, i) => (
+            <button key={svc.num} data-cursor="link"
+              onClick={() => setActive(i)}
+              onMouseEnter={() => setActive(i)}
+              style={{
+                textAlign: "left", padding: "28px 24px",
+                borderLeft: i === 0 ? "none" : "1px solid var(--color-border)",
+                background: active === i ? "var(--color-surface)" : "transparent",
+                color: active === i ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                transition: "all .4s", position: "relative"
+              }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+                <span className="mono-label" style={{ color: active === i ? "var(--color-accent)" : undefined }}>N° {svc.num}</span>
+                {active === i && <span style={{ width: 6, height: 6, background: "var(--color-accent)", borderRadius: 999 }} />}
+              </div>
+              <h3 className="display" style={{ fontSize: 30, fontWeight: 400, lineHeight: 1.1 }}>{svc.name}</h3>
+            </button>
+          ))}
+        </div>
+
+        <div className="svc-row svc-detail" key={active} style={{
+          display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 32, marginTop: 56
+        }}>
+          <div style={{ gridColumn: "1 / span 4" }}>
+            <p style={{ fontFamily: "var(--f-display)", fontSize: 32, lineHeight: 1.25, fontWeight: 300 }}>
+              {s.tagline}
+            </p>
+            <p className="mono-label" style={{ marginTop: 28 }}>— Select a tier →</p>
+          </div>
+
+          <PricingCard tier="Blueprint" num="01" pkg={s.blueprint}
+            style={{ gridColumn: "5 / span 4" }} />
+          <PricingCard tier="Signature" num="02" pkg={s.signature} primary
+            style={{ gridColumn: "9 / span 4" }} />
+        </div>
+
+        <div className="svc-row bespoke-row" style={{
+          marginTop: 32,
+          border: "1px solid var(--color-border)",
+          padding: "32px 36px",
+          display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 32, alignItems: "center"
+        }}>
+          <div style={{ gridColumn: "1 / span 2" }}>
+            <span className="mono-label" style={{ color: "var(--color-accent)" }}>N° 03</span>
+            <h3 className="display" style={{ fontSize: 42, fontWeight: 300, marginTop: 8, fontStyle: "italic" }}>Bespoke</h3>
+          </div>
+          <div style={{ gridColumn: "3 / span 6" }}>
+            <p style={{ color: "var(--color-text-secondary)", fontSize: 17 }}>
+              Long-form campaigns, full-building sets, architectural films, CGI stills with motion companions. Scoped per project with fixed fees and a single point of contact.
+            </p>
+          </div>
+          <div style={{ gridColumn: "9 / span 4", display: "flex", justifyContent: "flex-end", gap: 12, flexWrap: "wrap" }}>
+            <a className="btn" data-cursor="link" href="#contact"
+              onClick={(e) => { e.preventDefault(); document.getElementById("contact").scrollIntoView({ behavior: "smooth" }); }}>
+              Get custom quote <span className="arrow" />
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+window.__SOA_PORTFOLIO = { Portfolio, Services };
+</script>
+
+<script type="text/babel">
+// process-contact.jsx
+const { useEffect: useEff3, useRef: useRef3, useState: useState3 } = React;
+
+function Process() {
+  const ref = useRef3(null);
+  useEff3(() => {
+    const ctx = gsap.context(() => {
+      gsap.utils.toArray(".proc-step", ref.current).forEach((el, i) => {
+        gsap.from(el, {
+          y: 60, opacity: 0, duration: 1, ease: "expo.out", delay: i * 0.1,
+          scrollTrigger: { trigger: ref.current, start: "top 70%", once: true }
+        });
+      });
+      gsap.fromTo(".proc-line", { scaleX: 0 }, {
+        scaleX: 1, duration: 1.6, ease: "expo.out",
+        scrollTrigger: { trigger: ref.current, start: "top 70%", once: true }
+      });
+    }, ref);
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <section id="process" ref={ref} style={{ padding: "140px 0 120px", borderTop: "1px solid var(--color-border)" }}>
+      <div className="container">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 32, marginBottom: 72 }}>
+          <div style={{ gridColumn: "1 / span 6" }}>
+            <span className="mono-label">— (Process / 005)</span>
+            <h2 className="display" style={{ fontSize: "clamp(48px, 7vw, 120px)", marginTop: 18 }}>
+              Four steps,<br/><em style={{ color: "var(--color-accent)" }}>no surprises.</em>
+            </h2>
+          </div>
+          <div style={{ gridColumn: "8 / span 5", alignSelf: "end" }}>
+            <p style={{ color: "var(--color-text-secondary)", fontSize: 17 }}>
+              A tight, repeatable loop that keeps the scope contained, the timeline honest, and the output magazine-grade.
+            </p>
+          </div>
+        </div>
+
+        <div className="proc-line" style={{
+          height: 1, background: "var(--color-accent)", opacity: 0.4, transformOrigin: "left center",
+          marginBottom: 32
+        }} />
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1, background: "var(--color-border)" }} className="process-grid">
+          {window.SOA_PROCESS.map((p, i) => (
+            <div key={p.n} className="proc-step" style={{
+              background: "var(--color-bg)",
+              padding: "36px 32px 56px",
+              display: "flex", flexDirection: "column", gap: 18,
+              minHeight: 260
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span className="display" style={{ fontSize: 72, fontWeight: 300, color: "var(--color-accent)", lineHeight: 1 }}>{p.n}</span>
+                <span className="mono-label">Step</span>
+              </div>
+              <h3 className="display" style={{ fontSize: 34, fontWeight: 400 }}>{p.label}</h3>
+              <p style={{ color: "var(--color-text-secondary)", fontSize: 15, lineHeight: 1.55 }}>{p.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Field({ label, val, onChange, type="text", required }) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 10, borderBottom: "1px solid var(--color-border)", paddingBottom: 14 }}>
+      <span className="mono-label">{label}</span>
+      <input type={type} value={val} onChange={(e)=>onChange(e.target.value)} required={required}
+        data-cursor="link"
+        style={{
+          background: "transparent", border: "none", outline: "none",
+          color: "var(--color-text-primary)", fontFamily: "var(--f-display)", fontSize: 26, fontWeight: 300,
+          padding: "4px 0"
+        }} />
+    </label>
+  );
+}
+
+function TextArea({ label, val, onChange }) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 10, borderBottom: "1px solid var(--color-border)", paddingBottom: 14 }}>
+      <span className="mono-label">{label}</span>
+      <textarea value={val} onChange={(e)=>onChange(e.target.value)} rows={4}
+        data-cursor="link"
+        style={{
+          background: "transparent", border: "none", outline: "none", resize: "vertical",
+          color: "var(--color-text-primary)", fontFamily: "var(--f-ui)", fontSize: 17, fontWeight: 300,
+          padding: "4px 0"
+        }} />
+    </label>
+  );
+}
+
+function SelectField({ label, val, onChange, options }) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 10, borderBottom: "1px solid var(--color-border)", paddingBottom: 14 }}>
+      <span className="mono-label">{label}</span>
+      <select value={val} onChange={(e)=>onChange(e.target.value)} data-cursor="link"
+        style={{
+          background: "transparent", border: "none", outline: "none",
+          color: "var(--color-text-primary)", fontFamily: "var(--f-display)", fontSize: 24, fontWeight: 300,
+          padding: "4px 0", appearance: "none", cursor: "none"
+        }}>
+        <option value="" style={{ background: "var(--color-bg)" }}>— select —</option>
+        {options.map(o => <option key={o} value={o} style={{ background: "var(--color-bg)" }}>{o}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function Contact() {
+  const [form, setForm] = useState3({ name: "", email: "", service: "", brief: "", budget: "" });
+  const [sent, setSent] = useState3(false);
+
+  const ref = useRef3(null);
+  useEff3(() => {
+    const ctx = gsap.context(() => {
+      gsap.utils.toArray(".ct-line", ref.current).forEach((el, i) => {
+        gsap.from(el, {
+          yPercent: 110, duration: 1.1, ease: "expo.out", delay: i * 0.08,
+          scrollTrigger: { trigger: ref.current, start: "top 75%", once: true }
+        });
+      });
+      gsap.utils.toArray(".ct-fade", ref.current).forEach((el, i) => {
+        gsap.from(el, {
+          y: 40, opacity: 0, duration: 0.9, ease: "expo.out", delay: 0.25 + i * 0.08,
+          scrollTrigger: { trigger: ref.current, start: "top 70%", once: true }
+        });
+      });
+    }, ref);
+    return () => ctx.revert();
+  }, []);
+
+  const submit = (e) => {
+    e.preventDefault();
+    setSent(true);
+  };
+
+  return (
+    <section id="contact" ref={ref} style={{
+      padding: "160px 0 80px", borderTop: "1px solid var(--color-border)",
+      position: "relative", overflow: "hidden"
+    }}>
+      <div className="container">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 32 }} className="contact-grid">
+          <div style={{ gridColumn: "1 / span 12", marginBottom: 64 }}>
+            <span className="mono-label">— (Contact / 006)</span>
+            <h2 className="display" style={{ fontSize: "clamp(72px, 13vw, 220px)", marginTop: 16, lineHeight: 0.9 }}>
+              <span className="line-mask"><span className="ct-line" style={{ display: "block" }}>Let's render</span></span>
+              <span className="line-mask"><span className="ct-line" style={{ display: "block", fontStyle: "italic", color: "var(--color-accent)" }}>the unbuilt.</span></span>
+            </h2>
+          </div>
+
+          <form className="ct-fade" onSubmit={submit} style={{ gridColumn: "1 / span 7", display: "flex", flexDirection: "column", gap: 20 }}>
+            <Field label="01 / Name" val={form.name} onChange={(v)=>setForm({...form, name: v})} required />
+            <Field label="02 / Email" type="email" val={form.email} onChange={(v)=>setForm({...form, email: v})} required />
+            <SelectField label="03 / Service" val={form.service} onChange={(v)=>setForm({...form, service: v})}
+              options={["Interior", "Exterior", "Product", "3D Modeling", "Not sure yet"]} />
+            <SelectField label="04 / Budget (optional)" val={form.budget} onChange={(v)=>setForm({...form, budget: v})}
+              options={["< $500", "$500 — $2k", "$2k — $5k", "$5k+"]} />
+            <TextArea label="05 / Project brief" val={form.brief} onChange={(v)=>setForm({...form, brief: v})} />
+
+            <div style={{ display: "flex", gap: 12, marginTop: 12, alignItems: "center" }}>
+              <button type="submit" className="btn primary" data-cursor="link" disabled={sent}>
+                {sent ? "Received — we'll reply in 24h" : "Send the brief"} <span className="arrow" />
+              </button>
+              {sent && <span className="mono-label" style={{ color: "var(--color-accent)" }}>✓ Stored</span>}
+            </div>
+          </form>
+
+          <div className="ct-fade" style={{ gridColumn: "9 / span 4", display: "flex", flexDirection: "column", gap: 24 }}>
+            <div style={{ border: "1px solid var(--color-border)", padding: "24px 24px" }}>
+              <span className="mono-label" style={{ color: "var(--color-accent)" }}>Fastest reply</span>
+              <h3 className="display" style={{ fontSize: 32, fontWeight: 400, marginTop: 8 }}>WhatsApp</h3>
+              <p style={{ color: "var(--color-text-secondary)", fontSize: 14, marginTop: 8 }}>
+                Typical reply in ~2 hrs during IST working hours.
+              </p>
+              <a href="https://wa.me/" data-cursor="link" className="btn" style={{ marginTop: 20, width: "100%", justifyContent: "space-between" }}>
+                Open chat <span className="arrow" />
+              </a>
+            </div>
+
+            <div style={{ border: "1px solid var(--color-accent)", padding: "24px 24px", background: "var(--color-surface)" }}>
+              <span className="mono-label" style={{ color: "var(--color-accent)" }}>Launch offer — new on Fiverr</span>
+              <h3 className="display" style={{ fontSize: 32, fontWeight: 400, marginTop: 8, fontStyle: "italic", color: "var(--color-accent)" }}>–20% / first 10</h3>
+              <p style={{ color: "var(--color-text-secondary)", fontSize: 14, marginTop: 8 }}>
+                First ten Fiverr briefs get twenty percent off any tier. Help us build the review wall — we'll give you the good rate.
+              </p>
+              <a href="#" data-cursor="link" className="btn primary" style={{ marginTop: 20, width: "100%", justifyContent: "space-between" }}>
+                Claim the rate <span className="arrow" />
+              </a>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
+              <span className="mono-label">Or write us at</span>
+              <a href="mailto:hello@studioofanarchy.com" data-cursor="link"
+                 className="display" style={{ fontSize: 24, color: "var(--color-text-primary)" }}>
+                hello@studioofanarchy.com
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer style={{ borderTop: "1px solid var(--color-border)", padding: "40px 0" }}>
+      <div className="container" style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 24
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ width: 8, height: 8, background: "var(--color-accent)", borderRadius: 999 }} />
+          <span style={{ fontFamily: "var(--f-ui)", fontSize: 12, letterSpacing: "0.22em", textTransform: "uppercase" }}>
+            Studio <span style={{ color: "var(--color-text-dim)" }}>/</span> Anarchy
+          </span>
+        </div>
+        <span className="mono-label">© 2026 — Where spaces come alive</span>
+        <div style={{ display: "flex", gap: 24 }} className="mono-label">
+          <a href="#" data-cursor="link">Instagram</a>
+          <a href="#" data-cursor="link">Behance</a>
+          <a href="#" data-cursor="link">Fiverr</a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+window.__SOA_SECTIONS = { Process, Contact, Footer };
+</script>
+
+<script type="text/babel">
+// router-pages.jsx
+const { useEffect: useEffR, useState: useStateR, useRef: useRefR, useMemo: useMemoR } = React;
+
+function useRoute() {
+  const parse = () => {
+    const h = (window.location.hash || "#/").replace(/^#/, "");
+    if (h === "/" || h === "") return { name: "home", anchor: null };
+    if (h.startsWith("/gallery")) {
+      const cat = h.split("/")[2] || "all";
+      return { name: "gallery", category: cat };
+    }
+    if (h.startsWith("/project/")) {
+      return { name: "project", slug: h.split("/")[2] };
+    }
+    if (h.startsWith("/#")) return { name: "home", anchor: h.slice(2) };
+    if (h.startsWith("/portfolio") || h.startsWith("/services") || h.startsWith("/process") || h.startsWith("/contact")) {
+      return { name: "home", anchor: h.replace(/^\//, "") };
+    }
+    return { name: "home", anchor: null };
+  };
+
+  const [route, setRoute] = useStateR(parse());
+  useEffR(() => {
+    const onHash = () => {
+      setRoute(parse());
+      window.scrollTo({ top: 0, behavior: "instant" });
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  return route;
+}
+
+function navigate(hash) {
+  window.location.hash = hash;
+}
+
+function PageTransition({ routeKey, children }) {
+  const ref = useRefR(null);
+  useEffR(() => {
+    if (!ref.current) return;
+    gsap.fromTo(ref.current,
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.9, ease: "expo.out" }
+    );
+    setTimeout(() => ScrollTrigger && ScrollTrigger.refresh(), 200);
+  }, [routeKey]);
+  return <div ref={ref} key={routeKey}>{children}</div>;
+}
+
+function GalleryPage({ category }) {
+  const cats = [
+    ["All", "all"],
+    ["Interior", "interior"],
+    ["Exterior", "exterior"],
+    ["Product", "product"],
+    ["3D Modeling", "3d-modeling"],
+  ];
+  const [active, setActive] = useStateR(category || "all");
+  const [shown, setShown] = useStateR(6);
+
+  useEffR(() => { setActive(category || "all"); setShown(6); }, [category]);
+
+  const filtered = useMemoR(() =>
+    active === "all" ? window.SOA_PROJECTS : window.SOA_PROJECTS.filter(p => p.category === active),
+    [active]
+  );
+  const visible = filtered.slice(0, shown);
+
+  return (
+    <main style={{ paddingTop: 140, paddingBottom: 120 }}>
+      <div className="container">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 32, alignItems: "end", marginBottom: 48 }} className="editorial-grid">
+          <div style={{ gridColumn: "1 / span 8" }}>
+            <span className="mono-label" style={{ color: "var(--color-accent)" }}>— Index of work · {filtered.length} projects</span>
+            <h1 className="display" style={{ fontSize: "clamp(56px, 10vw, 144px)", fontWeight: 300, letterSpacing: "-0.03em", lineHeight: 0.92, marginTop: 16 }}>
+              The <em style={{ fontStyle: "italic", color: "var(--color-accent)" }}>archive</em>
+            </h1>
+          </div>
+          <div style={{ gridColumn: "9 / span 4" }}>
+            <p style={{ color: "var(--color-text-secondary)", fontSize: 16, lineHeight: 1.6 }}>
+              A running index of every project shipped. Filter by discipline, click any frame to open the case study.
+            </p>
+          </div>
+        </div>
+
+        <div style={{
+          display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 48,
+          padding: 6, border: "1px solid var(--color-border)", width: "fit-content",
+          maxWidth: "100%", borderRadius: 999
+        }}>
+          {cats.map(([l, v]) => {
+            const isActive = active === v;
+            const count = v === "all" ? window.SOA_PROJECTS.length : window.SOA_PROJECTS.filter(p => p.category === v).length;
+            return (
+              <button key={v} data-cursor="link"
+                onClick={() => { setActive(v); setShown(6); navigate(v === "all" ? "/gallery" : `/gallery/${v}`); }}
+                style={{
+                  padding: "10px 16px", borderRadius: 999, fontFamily: "var(--f-ui)", fontSize: 11,
+                  letterSpacing: "0.18em", textTransform: "uppercase",
+                  background: isActive ? "var(--color-accent)" : "transparent",
+                  color: isActive ? "var(--color-bg)" : "var(--color-text-secondary)",
+                  fontWeight: isActive ? 500 : 300,
+                  transition: "all .35s",
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  whiteSpace: "nowrap"
+                }}>
+                <span>{l}</span>
+                <span style={{ fontSize: 9, opacity: 0.7 }}>{String(count).padStart(2, "0")}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 24 }} className="portfolio-grid-mobile">
+          {visible.map((p, i) => {
+            const layouts = [
+              { gridColumn: "1 / span 7", aspect: "4 / 3" },
+              { gridColumn: "8 / span 5", aspect: "3 / 4" },
+              { gridColumn: "1 / span 5", aspect: "3 / 4" },
+              { gridColumn: "6 / span 7", aspect: "4 / 3" },
+              { gridColumn: "1 / span 6", aspect: "1 / 1" },
+              { gridColumn: "7 / span 6", aspect: "1 / 1" },
+            ];
+            const L = layouts[i % layouts.length];
+            return (
+              <a key={p.id} href={`#/project/${p.slug}`} data-cursor="view"
+                style={{ gridColumn: L.gridColumn, display: "block", textDecoration: "none", color: "inherit" }}>
+                <div style={{
+                  position: "relative", aspectRatio: L.aspect, overflow: "hidden",
+                  background: "var(--color-surface-2)"
+                }}>
+                  <img src={p.image} alt={p.title} loading="lazy"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform .9s cubic-bezier(.2,.8,.2,1)" }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.04)"}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"} />
+                  <div style={{
+                    position: "absolute", top: 12, left: 12,
+                    fontFamily: "var(--f-mono)", fontSize: 10, letterSpacing: "0.22em",
+                    color: "var(--color-text-primary)", opacity: 0.85
+                  }}>N° {p.num}</div>
+                </div>
+                <div style={{ padding: "16px 4px 0", display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 16 }}>
+                    <h3 className="display" style={{ fontSize: 26, fontWeight: 400 }}>{p.title}</h3>
+                    <span className="mono-label" style={{ color: "var(--color-accent)" }}>{p.category.replace("-", " ")}</span>
+                  </div>
+                  <div className="mono-label">{p.location} · {p.year}</div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+
+        {shown < filtered.length && (
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 64 }}>
+            <button data-cursor="link" className="btn" onClick={() => setShown(shown + 6)}>
+              Load more · {filtered.length - shown} remaining <span className="arrow" />
+            </button>
+          </div>
+        )}
+
+        <div style={{ marginTop: 96, paddingTop: 32, borderTop: "1px solid var(--color-border)", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+          <a href="#/" data-cursor="link" className="mono-label" style={{ color: "var(--color-text-primary)" }}>← Back to studio</a>
+          <a href="#/contact" data-cursor="link" className="mono-label" style={{ color: "var(--color-accent)" }}>Start a project →</a>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function SpecRow({ label, value }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid var(--color-border)", paddingTop: 12, gap: 12 }}>
+      <span className="mono-label" style={{ flexShrink: 0 }}>{label}</span>
+      <span style={{ fontFamily: "var(--f-ui)", fontSize: 13, color: "var(--color-text-primary)", textAlign: "right" }}>{value}</span>
+    </div>
+  );
+}
+
+function ProjectPage({ slug }) {
+  const projects = window.SOA_PROJECTS;
+  const idx = projects.findIndex(p => p.slug === slug);
+  const p = projects[idx];
+  if (!p) {
+    return (
+      <main style={{ paddingTop: 200, paddingBottom: 120, textAlign: "center" }}>
+        <div className="container">
+          <h1 className="display" style={{ fontSize: 64 }}>Not in the archive</h1>
+          <p style={{ color: "var(--color-text-secondary)", marginTop: 16 }}>This project doesn't exist.</p>
+          <a href="#/gallery" className="btn" style={{ marginTop: 32, display: "inline-flex" }}>Back to archive <span className="arrow" /></a>
+        </div>
+      </main>
+    );
+  }
+
+  const prev = projects[(idx - 1 + projects.length) % projects.length];
+  const next = projects[(idx + 1) % projects.length];
+
+  const heroRef = useRefR(null);
+  useEffR(() => {
+    if (!heroRef.current) return;
+    gsap.fromTo(heroRef.current,
+      { clipPath: "inset(100% 0 0 0)" },
+      { clipPath: "inset(0% 0 0 0)", duration: 1.6, ease: "expo.out" });
+  }, [slug]);
+
+  return (
+    <main>
+      <section style={{ position: "relative", paddingTop: 90 }}>
+        <div className="container">
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
+            <a href="#/gallery" data-cursor="link" className="mono-label" style={{ color: "var(--color-text-primary)" }}>← Archive</a>
+            <span className="mono-label">N° {p.num} · {String(idx + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</span>
+          </div>
+        </div>
+        <div ref={heroRef} style={{
+          aspectRatio: "16 / 9", width: "100%", overflow: "hidden",
+          background: "var(--color-surface-2)"
+        }}>
+          <img src={p.gallery[0]} alt={p.title}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 64, paddingBottom: 48 }}>
+        <div className="container">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 32 }} className="editorial-grid">
+            <div style={{ gridColumn: "1 / span 8" }}>
+              <span className="mono-label" style={{ color: "var(--color-accent)" }}>{p.category.replace("-", " ")}</span>
+              <h1 className="display" style={{
+                fontSize: "clamp(56px, 10vw, 144px)", fontWeight: 300,
+                letterSpacing: "-0.03em", lineHeight: 0.92, marginTop: 16
+              }}>
+                {p.title}<em style={{ color: "var(--color-accent)", fontStyle: "italic" }}>.</em>
+              </h1>
+            </div>
+            <div style={{ gridColumn: "9 / span 4", display: "flex", flexDirection: "column", gap: 18, alignSelf: "end" }}>
+              <SpecRow label="Location" value={p.location} />
+              <SpecRow label="Year" value={p.year} />
+              <SpecRow label="Scope" value={p.scope} />
+              <SpecRow label="Tags" value={p.tags.join(" · ")} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 32, paddingBottom: 96 }}>
+        <div className="container">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: 32 }} className="editorial-grid">
+            <div style={{ gridColumn: "2 / span 1" }}>
+              <span className="mono-label">— Brief</span>
+            </div>
+            <div style={{ gridColumn: "4 / span 7" }}>
+              <p style={{ fontFamily: "var(--f-display)", fontSize: "clamp(22px, 2.4vw, 30px)", lineHeight: 1.4, fontWeight: 300, color: "var(--color-text-primary)" }}>
+                {p.summary}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ paddingTop: 0, paddingBottom: 96 }}>
+        <div className="container">
+          <span className="mono-label" style={{ color: "var(--color-accent)", display: "block", marginBottom: 24 }}>— Renders · {p.gallery.length}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+            {p.gallery.slice(1).map((src, i) => (
+              <figure key={i} style={{
+                aspectRatio: i % 2 === 0 ? "16 / 10" : "4 / 3",
+                width: i % 3 === 1 ? "78%" : "100%",
+                marginLeft: i % 3 === 1 ? "auto" : 0,
+                background: "var(--color-surface-2)", overflow: "hidden"
+              }}>
+                <img src={src} alt={`${p.title} render ${i + 2}`} loading="lazy"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section style={{ borderTop: "1px solid var(--color-border)" }}>
+        <div className="container" style={{ paddingTop: 32, paddingBottom: 32 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }} className="editorial-grid">
+            <a href={`#/project/${prev.slug}`} data-cursor="view" style={{ display: "block", color: "inherit" }}>
+              <span className="mono-label">← Previous</span>
+              <h3 className="display" style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 400, marginTop: 8 }}>{prev.title}</h3>
+            </a>
+            <a href={`#/project/${next.slug}`} data-cursor="view" style={{ display: "block", color: "inherit", textAlign: "right" }}>
+              <span className="mono-label">Next →</span>
+              <h3 className="display" style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 400, marginTop: 8, fontStyle: "italic", color: "var(--color-accent)" }}>{next.title}</h3>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ background: "var(--color-accent)", color: "var(--color-bg)", padding: "72px 0" }}>
+        <div className="container" style={{ textAlign: "center" }}>
+          <span className="mono-label" style={{ color: "var(--color-bg)", opacity: 0.7 }}>— Ready for yours?</span>
+          <h2 className="display" style={{ fontSize: "clamp(40px, 7vw, 88px)", fontWeight: 600, fontStyle: "italic", lineHeight: 1, marginTop: 16 }}>
+            Start a project.
+          </h2>
+          <div style={{ display: "inline-flex", gap: 12, marginTop: 32, flexWrap: "wrap", justifyContent: "center" }}>
+            <a href="#/contact" data-cursor="link" className="btn" style={{ background: "var(--color-bg)", color: "var(--color-text-primary)", borderColor: "var(--color-bg)" }}>
+              Send a brief <span className="arrow" />
+            </a>
+            <a href="#" onClick={(e) => e.preventDefault()} data-cursor="link" className="btn" style={{ borderColor: "var(--color-bg)", color: "var(--color-bg)" }}>
+              Hire on Fiverr <span className="arrow" />
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+window.__SOA_ROUTER = { useRoute, navigate, PageTransition, GalleryPage, ProjectPage };
+</script>
+
+<script type="text/babel">
+gsap.registerPlugin(ScrollTrigger);
+
+const { CustomCursor, Navbar, SplitLines } = window.__SOA_CORE;
+const { Hero, Intro } = window.__SOA_HERO;
+const { Portfolio, Services } = window.__SOA_PORTFOLIO;
+const { Process, Contact, Footer } = window.__SOA_SECTIONS;
+const { useRoute, PageTransition, GalleryPage, ProjectPage } = window.__SOA_ROUTER;
+
+function App() {
+  const [cfg, setCfg] = React.useState({ accent: "#C9A96E", bg: "#0A0A0A" });
+  const route = useRoute();
+
+  React.useEffect(() => {
+    document.documentElement.style.setProperty("--color-accent", cfg.accent);
+    document.documentElement.style.setProperty("--color-bg", cfg.bg);
+  }, [cfg]);
+
+  React.useEffect(() => {
+    document.documentElement.style.scrollBehavior = "smooth";
+    const onLoad = () => ScrollTrigger.refresh();
+    window.addEventListener("load", onLoad);
+    setTimeout(() => ScrollTrigger.refresh(), 800);
+    return () => window.removeEventListener("load", onLoad);
+  }, []);
+
+  React.useEffect(() => {
+    if (route.name === "home" && route.anchor) {
+      setTimeout(() => {
+        const el = document.getElementById(route.anchor);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
+    }
+  }, [route]);
+
+  return (
+    <>
+      <CustomCursor />
+      <Navbar />
+      <PageTransition routeKey={route.name}>
+        {route.name === "gallery" && <GalleryPage category={route.category} />}
+        {route.name === "project" && <ProjectPage slug={route.slug} />}
+        {route.name === "home" && (
+          <main>
+            <Hero />
+            <Intro />
+            <Portfolio />
+            <Services />
+            <Process />
+            <Contact />
+          </main>
+        )}
+      </PageTransition>
+      <Footer />
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
