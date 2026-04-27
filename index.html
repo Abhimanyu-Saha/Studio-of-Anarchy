@@ -30,6 +30,11 @@
   --f-display: "Cormorant Garamond", "Times New Roman", serif;
   --f-ui: "Outfit", system-ui, sans-serif;
   --f-mono: "Space Mono", "Courier Prime", monospace;
+
+  /* Strong easing curves — Emil Kowalski */
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -210,11 +215,15 @@ button { background: none; border: none; color: inherit; font-family: inherit; c
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
   background: transparent;
-  transition: background .35s, color .35s, border-color .35s;
+  transition: background 180ms var(--ease-out),
+              color 180ms var(--ease-out),
+              border-color 180ms var(--ease-out),
+              transform 120ms var(--ease-out);
   border-radius: 999px;
 }
 .btn .arrow {
-  width: 18px; height: 1px; background: currentColor; position: relative; transition: width .35s;
+  width: 18px; height: 1px; background: currentColor; position: relative;
+  transition: width 180ms var(--ease-out);
 }
 .btn .arrow::after {
   content: ""; position: absolute; right: 0; top: 50%;
@@ -226,12 +235,15 @@ button { background: none; border: none; color: inherit; font-family: inherit; c
   width: 6px; height: 1px; background: currentColor;
   transform: rotate(-40deg); transform-origin: right center;
 }
-.btn:hover { background: var(--color-accent); color: var(--color-bg); border-color: var(--color-accent); }
-.btn:hover .arrow { width: 28px; }
+.btn:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { background: var(--color-accent); color: var(--color-bg); border-color: var(--color-accent); }
+  .btn:hover .arrow { width: 28px; }
+  .btn.primary:hover { background: var(--color-text-primary); border-color: var(--color-text-primary); }
+  .btn.ghost:hover { background: transparent; color: var(--color-accent); border-color: transparent; }
+}
 .btn.primary { background: var(--color-accent); color: var(--color-bg); border-color: var(--color-accent); }
-.btn.primary:hover { background: var(--color-text-primary); border-color: var(--color-text-primary); }
 .btn.ghost { border-color: transparent; padding-left: 0; padding-right: 0; }
-.btn.ghost:hover { background: transparent; color: var(--color-accent); border-color: transparent; }
 
 /* App root hidden until mounted */
 #root { min-height: 100vh; }
@@ -333,6 +345,12 @@ button { background: none; border: none; color: inherit; font-family: inherit; c
     transition: max-height .4s cubic-bezier(.2,.8,.2,1);
   }
   .pricing-list.open { max-height: 600px; }
+}
+
+/* prefers-reduced-motion — keep opacity fades, remove positional motion */
+@media (prefers-reduced-motion: reduce) {
+  .btn, .cursor-ring, .mobile-menu-btn span,
+  .mobile-overlay, .mobile-overlay a { transition-duration: 0ms !important; }
 }
 
 /* Selection */
@@ -648,7 +666,7 @@ function BottomNav({ links, scrollTo }) {
                  padding: "10px 18px",
                  borderRadius: 999,
                  color: isActive ? "var(--color-bg)" : "var(--color-text-secondary)",
-                 transition: "color .45s cubic-bezier(.2,.8,.2,1)",
+                 transition: "color 180ms cubic-bezier(0.23,1,0.32,1)",
                  fontWeight: isActive ? 500 : 300,
                  display: "inline-flex", alignItems: "center", gap: 8,
                }}
@@ -692,7 +710,7 @@ function Navbar() {
         { y: 0, opacity: 1, duration: 0.8, stagger: 0.06, ease: "expo.out", delay: 0.15 });
     } else {
       document.body.style.overflow = "";
-      gsap.to(overlayRef.current, { clipPath: "inset(0 0 100% 0)", duration: 0.5, ease: "expo.in" });
+      gsap.to(overlayRef.current, { clipPath: "inset(0 0 100% 0)", duration: 0.38, ease: "expo.out" });
     }
   }, [menuOpen]);
 
@@ -734,7 +752,7 @@ function Navbar() {
     <nav style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
       padding: scrolled ? "12px clamp(20px, 4vw, 48px)" : "22px clamp(20px, 4vw, 48px)",
-      transition: "all .45s cubic-bezier(.2,.8,.2,1)",
+      transition: "padding 250ms var(--ease-out, cubic-bezier(0.23,1,0.32,1)), background 250ms var(--ease-out, cubic-bezier(0.23,1,0.32,1)), border-color 250ms var(--ease-out, cubic-bezier(0.23,1,0.32,1)), backdrop-filter 250ms var(--ease-out, cubic-bezier(0.23,1,0.32,1))",
       background: scrolled || menuOpen ? "rgba(10,10,10,0.72)" : "transparent",
       backdropFilter: scrolled || menuOpen ? "blur(14px)" : "none",
       borderBottom: scrolled ? "1px solid var(--color-border)" : "1px solid transparent",
@@ -960,7 +978,7 @@ function HeroCarousel({ imgRef }) {
             style={{
               width: idx === i ? 24 : 8, height: 8, borderRadius: 999,
               background: idx === i ? "var(--color-accent)" : "rgba(240,237,232,0.4)",
-              transition: "all .4s cubic-bezier(.2,.8,.2,1)",
+              transition: "width 220ms cubic-bezier(0.23,1,0.32,1), background 220ms cubic-bezier(0.23,1,0.32,1)",
               border: "none", padding: 0
             }} />
         ))}
@@ -1353,7 +1371,7 @@ function Portfolio() {
                 background: filter === k ? "var(--color-accent)" : "transparent",
                 color: filter === k ? "var(--color-bg)" : "var(--color-text-secondary)",
                 fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase",
-                transition: "all .3s",
+                transition: "background 180ms cubic-bezier(0.23,1,0.32,1), color 180ms cubic-bezier(0.23,1,0.32,1), border-color 180ms cubic-bezier(0.23,1,0.32,1)",
               }}>
               {l} <span style={{ opacity: 0.55, marginLeft: 6 }}>
                 [{k === "all" ? window.SOA_PROJECTS.length : window.SOA_PROJECTS.filter(p => p.category === k).length}]
@@ -1504,7 +1522,7 @@ function Services() {
                 borderLeft: i === 0 ? "none" : "1px solid var(--color-border)",
                 background: active === i ? "var(--color-surface)" : "transparent",
                 color: active === i ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                transition: "all .4s", position: "relative"
+                transition: "background 180ms cubic-bezier(0.23,1,0.32,1), color 180ms cubic-bezier(0.23,1,0.32,1)", position: "relative"
               }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
                 <span className="mono-label" style={{ color: active === i ? "var(--color-accent)" : undefined }}>N° {svc.num}</span>
@@ -1901,7 +1919,7 @@ function GalleryPage({ category }) {
                   background: isActive ? "var(--color-accent)" : "transparent",
                   color: isActive ? "var(--color-bg)" : "var(--color-text-secondary)",
                   fontWeight: isActive ? 500 : 300,
-                  transition: "all .35s",
+                  transition: "background 180ms cubic-bezier(0.23,1,0.32,1), color 180ms cubic-bezier(0.23,1,0.32,1)",
                   display: "inline-flex", alignItems: "center", gap: 8,
                   whiteSpace: "nowrap"
                 }}>
